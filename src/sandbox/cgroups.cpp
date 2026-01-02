@@ -60,4 +60,39 @@ bool remove_transient_cgroup(const std::string& cgroup_path) {
     return true;
 }
 
+bool set_cgroup_cpu_max(const std::string& cgroup_path, const std::string& cpu_max) {
+    std::string file = cgroup_path + "/cpu.max";
+    if (!write_file(file, cpu_max + "\n")) {
+        std::cerr << "[cgroups] failed to write cpu.max" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool set_cgroup_memory_max(const std::string& cgroup_path, const std::string& memory_max) {
+    std::string file = cgroup_path + "/memory.max";
+    if (!write_file(file, memory_max + "\n")) {
+        std::cerr << "[cgroups] failed to write memory.max" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool set_cgroup_pids_max(const std::string& cgroup_path, const std::string& pids_max) {
+    std::string file = cgroup_path + "/pids.max";
+    if (!write_file(file, pids_max + "\n")) {
+        std::cerr << "[cgroups] failed to write pids.max" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+std::string read_cgroup_file(const std::string& path) {
+    std::ifstream ifs(path);
+    if (!ifs.is_open()) return std::string();
+    std::string content;
+    std::getline(ifs, content);
+    return content;
+}
+
 } // namespace sandbox

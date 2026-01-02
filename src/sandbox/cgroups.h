@@ -18,4 +18,16 @@ bool add_pid_to_cgroup(const std::string& cgroup_path, pid_t pid = 0);
 // Remove the transient cgroup; best effort.
 bool remove_transient_cgroup(const std::string& cgroup_path);
 
+// Resource limits (cgroup v2 controller files)
+// Set CPU max (value format as in cgroup v2, e.g. "100000 100000" or "max")
+bool set_cgroup_cpu_max(const std::string& cgroup_path, const std::string& cpu_max);
+
+// Set memory max in bytes (or "max" for no limit)
+bool set_cgroup_memory_max(const std::string& cgroup_path, const std::string& memory_max);
+
+// Set pids max (integer or "max")
+bool set_cgroup_pids_max(const std::string& cgroup_path, const std::string& pids_max);
+
+// Read back controller files for verification
+std::string read_cgroup_file(const std::string& path);
 } // namespace sandbox

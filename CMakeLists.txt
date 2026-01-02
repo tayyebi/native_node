@@ -140,6 +140,10 @@ if(UNIX)
   target_include_directories(invocation_cgroup_test PRIVATE src)
   add_test(NAME invocation_cgroup_test COMMAND invocation_cgroup_test)
   set_tests_properties(invocation_cgroup_test PROPERTIES LABELS "smoke;cgroups;invocation")
+  add_executable(executor_test tests/executor_test.cpp src/sandbox/executor.cpp src/sandbox/invocation_cgroup.cpp src/sandbox/cgroups.cpp)
+  target_include_directories(executor_test PRIVATE src)
+  add_test(NAME executor_test COMMAND executor_test)
+  set_tests_properties(executor_test PROPERTIES LABELS "smoke;executor")
 endif()
 
 

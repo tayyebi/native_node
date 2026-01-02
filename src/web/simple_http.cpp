@@ -41,6 +41,49 @@ static void handle_client(int client) {
 
     if (path == "/" ) path = "/index.html";
 
+    // runtime endpoint to run a script: /run-script?name=sample_script.sh
+    if (path.rfind("/run-script", 0) == 0) {
+        // parse query
+        std::string::size_type q = path.find('?');
+        std::string query;
+        if (q != std::string::npos) query = path.substr(q+1);
+        std::string script_name;
+        if (!query.empty()) {
+            size_t pos = query.find("name=");
+            if (pos != std::string::npos) {
+                script_name = query.substr(pos+5);
+            }
+        }
+        if (script_name.empty()) {
+            std::string body = "{\"error\": \"missing script name\"}";
+            std::string resp = "HTTP/1.1 400 Bad Request\r\nContent-Length: " + std::to_string(body.size()) + "\r\nContent-Type: application/json\r\n\r\n" + body;
+            send(client, resp.c_str(), resp.size(), 0);
+            close(client);
+            return;
+        }
+
+        // Execute the script using the executor in a new thread (non-blocking HTTP response)
+        std::thread([script_name](){
+            std::string script_path = std::string("./scripts/") + script_name;
+            // Use simple system() invocation via executor; avoid directly calling exec here.
+            sandbox::CgroupLimits limits;
+            limits.cpu_max = "max";
+            limits.memory_max = "max";
+            limits.pids_max = "max";
+            std::vector<std::string> args = { script_path };
+            auto res = sandbox::run_command_in_cgroup(args, limits, 10);
+            // Log result to artifacts
+            std::ofstream ofs("artifacts/run_script_output.txt", std::ios::app);
+            ofs << "script=" << script_name << " exit=" << res.exit_code << " success=" << res.success << " output:\n" << res.output << "\n---\n";
+        }).detach();
+
+        std::string body = "{\"status\": " + std::string("\"scheduled\"") + "}";
+        std::string resp = "HTTP/1.1 202 Accepted\r\nContent-Length: " + std::to_string(body.size()) + "\r\nContent-Type: application/json\r\n\r\n" + body;
+        send(client, resp.c_str(), resp.size(), 0);
+        close(client);
+        return;
+    }
+
     // API endpoints
     if (path == "/api/status") {
         time_t now = time(nullptr);

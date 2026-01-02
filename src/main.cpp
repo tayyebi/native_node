@@ -49,7 +49,7 @@ static void signal_handler(int) {
         return 1;
     }
 
-    if (!web::init_static_server("src/web/ui", 8081)) {
+    if (!web::http::start("src/web/ui", 8081)) {
         std::cerr << "Failed to initialize web server" << std::endl;
         return 1;
     }
@@ -62,12 +62,10 @@ static void signal_handler(int) {
 
 
     while (!g_terminate) {
-    while (true) {
-        // TODO: Run event loop, accept requests, dispatch to JIT handlers
         std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 
     std::cout << "Shutdown requested, cleaning up..." << std::endl;
-    }
 
     // Clean shutdown (unreachable until signal handling is added)
     services::shutdown();

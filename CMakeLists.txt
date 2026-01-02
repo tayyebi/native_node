@@ -28,6 +28,10 @@ set(SRC
   ${WEB_SOURCES}
   ${TRIGGERS_SOURCES}
   src/engine/jit_bootstrap.cpp
+  src/web/simple_http.cpp
+  src/sandbox/executor.cpp
+  src/sandbox/invocation_cgroup.cpp
+  src/sandbox/cgroups.cpp
 )
 
 add_executable(native_node ${SRC})
@@ -80,6 +84,9 @@ if(MUSL_STATIC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -s")
   add_compile_options(-static)
 endif()
+
+# Link additional components (executor/cgroups/web) into the native_node binary
+target_link_libraries(native_node PRIVATE ${CMAKE_DL_LIBS})
 
 # Enable CTest and add a basic JIT smoke test that runs the binary with --jit-smoke
 include(CTest)

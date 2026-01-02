@@ -59,5 +59,12 @@ Example usage:
 - edit to remove unnecessary syscalls
 - start the service: `./build/native_node`
 
+E2E script lifecycle (admin)
+---------------------------
+
+You can run a sample script via the admin HTTP endpoint added for e2e testing: `GET /run-script?name=sample_script.sh`.
+This endpoint schedules the script to run under a per-invocation cgroup using the `executor` and writes the result into `artifacts/run_script_output.txt` (append mode).
+
+Use the Ansible E2E playbook (`ansible/playbooks/e2e.yml`) or the helper script `scripts/run_all_tests.sh` to exercise the full flow automatically (provision → build → tests → e2e).
 If seccomp cannot be applied (missing `libseccomp` or runtime failure), the service will log a clear error and refuse to start in order to maintain the hard security posture.
 

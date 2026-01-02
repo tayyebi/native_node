@@ -22,6 +22,33 @@
       apt:
         update_cache: yes
 
+    - name: Install prerequisites for Kitware APT repo (for newer CMake)
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - wget
+        state: present
+
+    - name: Add Kitware APT key and repository (for CMake >= 3.22)
+      block:
+        - name: Download Kitware GPG key and install
+          shell: |
+            wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg
+          args:
+            creates: /usr/share/keyrings/kitware-archive-keyring.gpg
+
+        - name: Add Kitware apt repository
+          copy:
+            dest: /etc/apt/sources.list.d/kitware.list
+            content: 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ {{ ansible_distribution_release }} main'
+      when: ansible_facts['os_family'] == 'Debian'
+
+    - name: Update apt after adding Kitware repo
+      apt:
+        update_cache: yes
+
     - name: Install required packages
       apt:
         name: "{{ pkg_list }}"
@@ -33,15 +60,28 @@
         state: present
       ignore_errors: yes
 
-    - name: Ensure ninja package available via pip as fallback
+    - name: Check if ninja is available
+      command: ninja --version
+      register: ninja_check
+      failed_when: false
+
+    - name: Install ninja via pip if missing
       pip:
         name: ninja
-      when: "ansible_facts.packages.get('ninja-build') is not defined"
+      when: ninja_check.rc != 0
+      ignore_errors: yes
 
     - name: Ensure pytest available for running tests (optional)
+      apt:
+        name: python3-pytest
+        state: present
+      ignore_errors: yes
+
+    - name: Try to install pytest via pip as fallback (best-effort)
       pip:
         name: pytest
         executable: pip3
+      ignore_errors: yes
 
     - name: Show installed kernel version
       command: uname -r

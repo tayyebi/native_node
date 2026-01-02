@@ -3,32 +3,47 @@
   hosts: local
   vars:
     build_dir: build
-    cmake_opts: "-DCMAKE_BUILD_TYPE=Release -DENGINE_JIT=ON -DUSE_CLANGREPL=ON"
+    cmake_opts: "-DCMAKE_BUILD_TYPE=Release -DENGINE_JIT=ON"
   tasks:
-    - name: Create build directory
-      file:
-        path: "{{ build_dir }}"
-        state: directory
+  - name: Create build directory
+    file:
+      path: "{{ build_dir }}"
+      state: directory
 
-    - name: Run CMake configure
-      command: cmake -S . -B {{ build_dir }} -G Ninja {{ cmake_opts }}
-      args:
-        chdir: "{{ playbook_dir }}/../.."
+  - name: Check for clang-repl availability
+    command: clang-repl --version
+    register: clangrepl_check
+    failed_when: false
 
-    - name: Build project
-      command: cmake --build {{ build_dir }} --config Release -j $(nproc)
-      args:
-        chdir: "{{ playbook_dir }}/../.."
+  - name: Set USE_CLANGREPL CMake option based on availability
+    set_fact:
+      cmake_clangrepl_opt: "-DUSE_CLANGREPL=ON"
+    when: clangrepl_check.rc == 0
 
-    - name: Run ctest (smoke tests)
-      command: ctest -V
-      args:
-        chdir: "{{ playbook_dir }}/../.."
-      register: ctest_res
-      failed_when: false
+  - name: Set USE_CLANGREPL=OFF if clang-repl not available
+    set_fact:
+      cmake_clangrepl_opt: "-DUSE_CLANGREPL=OFF"
+    when: clangrepl_check.rc != 0
 
-    - name: Save ctest results to artifact
-      copy:
-        content: "{{ ctest_res.stdout }}"
-        dest: ./artifacts/ctest_output.txt
-      delegate_to: localhost
+  - name: Run CMake configure
+    command: cmake -S . -B {{ build_dir }} -G Ninja {{ cmake_opts }} {{ cmake_clangrepl_opt }}
+    args:
+      chdir: "{{ playbook_dir }}/../.."
+
+  - name: Build project
+    command: cmake --build {{ build_dir }} --config Release -j $(nproc)
+    args:
+      chdir: "{{ playbook_dir }}/../.."
+
+  - name: Run ctest (smoke tests)
+    command: ctest -V
+    args:
+      chdir: "{{ playbook_dir }}/../.."
+    register: ctest_res
+    failed_when: false
+
+  - name: Save ctest results to artifact
+    copy:
+      content: "{{ ctest_res.stdout }}"
+      dest: ./artifacts/ctest_output.txt
+    delegate_to: localhost

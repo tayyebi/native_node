@@ -21,6 +21,7 @@
     - name: Ensure apt cache is up to date
       apt:
         update_cache: yes
+      failed_when: false
 
     - name: Install prerequisites for Kitware APT repo (for newer CMake)
       apt:
@@ -38,6 +39,7 @@
             wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg
           args:
             creates: /usr/share/keyrings/kitware-archive-keyring.gpg
+          ignore_errors: yes
 
         - name: Add Kitware apt repository
           copy:
@@ -48,6 +50,19 @@
     - name: Update apt after adding Kitware repo
       apt:
         update_cache: yes
+      failed_when: false
+
+    - name: Check installed cmake version
+      command: cmake --version
+      register: cmake_check
+      failed_when: false
+
+    - name: Install CMake via pip if system cmake is older than 3.22
+      pip:
+        name: 'cmake>=3.22'
+        executable: pip3
+      when: cmake_check.rc != 0 or (cmake_check.stdout is defined and (cmake_check.stdout.split('\n')[0].split()[2] is version('3.22', '<')))
+      ignore_errors: yes
 
     - name: Install required packages
       apt:

@@ -1,0 +1,15 @@
+# Server configuration
+server:
+  host: 0.0.0.0
+  port: 8080
+
+paths:
+  scripts_dir: ./scripts
+  db_path: ./data/native_node.db
+
+# SMTP relay (placeholder)
+mail:
+  smtp_host: smtp.example.local
+  smtp_port: 587
+  username: ""
+  password: ""

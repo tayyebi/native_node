@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>native_node Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    header { display:flex; align-items:center; gap:1rem }
+    main { margin-top: 1.5rem }
+    .panel { border: 1px solid #ddd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>native_node Admin UI</h1>
+    <small>Prototype</small>
+  </header>
+  <main>
+    <div class="panel">
+      <h2>System Status</h2>
+      <div id="status">Loading...</div>
+    </div>
+
+    <div class="panel">
+      <h2>Scripts</h2>
+      <p>Script management UI will allow uploading, enabling/disabling, and viewing logs.</p>
+      <ul>
+        <li>List scripts</li>
+        <li>Upload new script</li>
+        <li>View logs</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>Triggers & Scheduling</h2>
+      <p>Create cron-based triggers and view scheduled jobs.</p>
+    </div>
+
+    <footer>
+      <small>Placeholder UI — backend endpoints not yet implemented</small>
+    </footer>
+  </main>
+  <script>
+    // Lightweight demo status fetch (endpoint to be implemented)
+    document.getElementById('status').textContent = 'Not connected to backend yet.';
+  </script>
+</body>
+</html>

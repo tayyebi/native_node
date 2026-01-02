@@ -111,6 +111,29 @@ if(UNIX AND EXISTS "${CMAKE_SOURCE_DIR}/src/sandbox/ruleset.cpp")
   endif()
 endif()
 
+# SQLite pool test
+find_package(SQLite3)
+if (SQLite3_FOUND)
+  message(STATUS "Found SQLite3: ${SQLite3_LIBRARIES}")
+  add_executable(sqlite_pool_test tests/sqlite_pool_test.cpp src/services/sqlite_pool.cpp)
+  target_include_directories(sqlite_pool_test PRIVATE src)
+  target_link_libraries(sqlite_pool_test PRIVATE ${SQLite3_LIBRARIES})
+  add_test(NAME sqlite_pool_test COMMAND sqlite_pool_test)
+  set_tests_properties(sqlite_pool_test PROPERTIES LABELS "smoke;sqlite")
+  target_compile_definitions(native_node PRIVATE -DHAVE_SQLITE3=1)
+  target_link_libraries(native_node PRIVATE ${SQLite3_LIBRARIES})
+else()
+  message(WARNING "SQLite3 not found: sqlite pool tests will be skipped")
+endif()
+
+# cgroups v2 test
+if(UNIX)
+  add_executable(cgroups_test tests/cgroups_test.cpp src/sandbox/cgroups.cpp)
+  target_include_directories(cgroups_test PRIVATE src)
+  add_test(NAME cgroups_test COMMAND cgroups_test)
+  set_tests_properties(cgroups_test PROPERTIES LABELS "smoke;cgroups")
+endif()
+
 
 # Installation
 install(TARGETS native_node RUNTIME DESTINATION bin)

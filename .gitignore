@@ -1,7 +1,7 @@
 /build/
 /.idea/
 .vscode/
-*.o
+artifacts/
 *.obj
 *.a
 *.so

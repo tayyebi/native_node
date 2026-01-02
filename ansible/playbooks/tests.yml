@@ -1,0 +1,34 @@
+---
+- name: Run unit/integration tests
+  hosts: local
+  tasks:
+    - name: Ensure artifacts dir exists
+      file:
+        path: ./artifacts
+        state: directory
+
+    - name: Run ctest for selected tests
+      command: ctest -V -R "jit_smoke_test|landlock|seccomp|sqlite|cgroups|executor"
+      args:
+        chdir: "{{ playbook_dir }}/../.."
+      register: testrun
+      failed_when: false
+
+    - name: Write test run output
+      copy:
+        content: "{{ testrun.stdout }}"
+        dest: ./artifacts/selected_tests_output.txt
+      delegate_to: localhost
+
+    - name: Run integration script api_status_test.sh
+      command: bash tests/api_status_test.sh
+      args:
+        chdir: "{{ playbook_dir }}/../.."
+      register: api_test
+      failed_when: false
+
+    - name: Save api_status_test output
+      copy:
+        content: "{{ api_test.stdout }}"
+        dest: ./artifacts/api_status_test_output.txt
+      delegate_to: localhost

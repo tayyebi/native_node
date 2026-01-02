@@ -1,0 +1,79 @@
+---
+- name: Full E2E run: provision, build, tests, e2e checks
+  hosts: local
+  become: true
+  vars:
+    project_root: "{{ playbook_dir }}/../.."
+    native_bin: "{{ project_root }}/build/native_node"
+  tasks:
+    - name: Check kernel version and require >=5.13 for Landlock
+      command: uname -r
+      register: kernel
+
+    - name: Fail if kernel < 5.13 (Landlock hard requirement)
+      fail:
+        msg: "Kernel {{ kernel.stdout }} is older than 5.13; Landlock is required for e2e tests."
+      when: kernel.stdout is version('5.13', '<')
+
+    - name: Ensure config/landlock_policy.conf exists (copy example if missing)
+      copy:
+        src: "{{ project_root }}/config/landlock_policy.example.conf"
+        dest: "{{ project_root }}/config/landlock_policy.conf"
+        remote_src: yes
+      when: not lookup('file', project_root + '/config/landlock_policy.conf', errors='ignore') is defined
+
+    - name: Start native_node in background
+      shell: "nohup {{ native_bin }} > {{ project_root }}/artifacts/native_node.log 2>&1 & echo $! > {{ project_root }}/artifacts/native_node.pid"
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Wait for native_node to start (sleep)
+      pause:
+        seconds: 3
+
+    - name: Run api_status_test to verify /api/status
+      command: bash tests/api_status_test.sh
+      args:
+        chdir: "{{ project_root }}"
+      register: api_status
+      failed_when: false
+
+    - name: Save api_status output
+      copy:
+        content: "{{ api_status.stdout }}"
+        dest: ./artifacts/e2e_api_status_output.txt
+      delegate_to: localhost
+
+    - name: Run executor test inside e2e (verify launching scripts in cgroups)
+      command: ctest -V -R executor_test
+      args:
+        chdir: "{{ project_root }}"
+      register: exec_res
+      failed_when: false
+
+    - name: Save executor test output
+      copy:
+        content: "{{ exec_res.stdout }}"
+        dest: ./artifacts/e2e_executor_output.txt
+      delegate_to: localhost
+
+    - name: Stop native_node (if running)
+      shell: |
+        if [ -f {{ project_root }}/artifacts/native_node.pid ]; then
+          pid=$(cat {{ project_root }}/artifacts/native_node.pid); kill $pid || true; rm -f {{ project_root }}/artifacts/native_node.pid; fi
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Collect native_node logs
+      fetch:
+        src: "{{ project_root }}/artifacts/native_node.log"
+        dest: "./artifacts/native_node.log"
+        flat: yes
+
+    - name: Summarize artifacts
+      shell: ls -la {{ project_root }}/artifacts
+      register: artifact_list
+
+    - name: Print artifact list
+      debug:
+        var: artifact_list.stdout

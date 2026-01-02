@@ -1,5 +1,5 @@
 ---
-- name: Full E2E run: provision, build, tests, e2e checks
+- name: "Full E2E run: provision, build, tests, e2e checks"
   hosts: local
   become: true
   vars:
@@ -41,7 +41,7 @@
     - name: Save api_status output
       copy:
         content: "{{ api_status.stdout }}"
-        dest: ./artifacts/e2e_api_status_output.txt
+        dest: "{{ playbook_dir }}/../../artifacts/e2e_api_status_output.txt"
       delegate_to: localhost
 
     - name: Run executor test inside e2e (verify launching scripts in cgroups)
@@ -54,7 +54,7 @@
     - name: Save executor test output
       copy:
         content: "{{ exec_res.stdout }}"
-        dest: ./artifacts/e2e_executor_output.txt
+        dest: "{{ playbook_dir }}/../../artifacts/e2e_executor_output.txt"
       delegate_to: localhost
 
     - name: Stop native_node (if running)
@@ -67,7 +67,7 @@
     - name: Collect native_node logs
       fetch:
         src: "{{ project_root }}/artifacts/native_node.log"
-        dest: "./artifacts/native_node.log"
+        dest: "{{ playbook_dir }}/../../artifacts/"
         flat: yes
 
     - name: Summarize artifacts

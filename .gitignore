@@ -16,3 +16,4 @@ Makefile
 
 # Generated binaries
 /native_node
+Testing/Temporary/*

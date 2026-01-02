@@ -42,8 +42,14 @@
     register: ctest_res
     failed_when: false
 
+  - name: Ensure artifacts directory exists
+    file:
+      path: "{{ playbook_dir }}/../../artifacts"
+      state: directory
+    delegate_to: localhost
+
   - name: Save ctest results to artifact
     copy:
       content: "{{ ctest_res.stdout }}"
-      dest: ./artifacts/ctest_output.txt
+      dest: "{{ playbook_dir }}/../../artifacts/ctest_output.txt"
     delegate_to: localhost

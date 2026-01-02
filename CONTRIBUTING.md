@@ -18,8 +18,9 @@ Code style
 - C++: target C++20. Keep code simple and documented. Follow existing repository style.
 - Add `clang-format` if needed; prefer `LLVM` or project convention.
 
-Testing & CI
+- Testing & CI
 - Use `scripts/dev_setup.sh build-run` to run the full build inside the dev image.
+- Note: This project requires kernel >= 5.13 for Landlock support (hard requirement) and the JIT backend uses **ClangREPL**. Ensure `clang-repl` is available in your dev environment for JIT smoke tests to pass.
 - Add tests under `tests/` (shell scripts are acceptable for integration smoke tests). Update `.github/workflows/ci.yml` or add a new CI workflow for reproducible builds.
 
 Third-party dependencies

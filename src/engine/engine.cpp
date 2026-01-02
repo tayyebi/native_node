@@ -30,15 +30,5 @@ bool is_initialized() {
     return g_initialized.load();
 }
 
-bool jit_smoke_test() {
-#ifdef USE_CLING
-    std::cout << "[engine] running JIT smoke test (Cling)" << std::endl;
-    // Real Cling initialization would occur here
-    return true;
-#else
-    std::cout << "[engine] JIT disabled or not using Cling" << std::endl;
-    return true;
-#endif
-}
 
 } // namespace engine

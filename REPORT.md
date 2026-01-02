@@ -49,15 +49,15 @@ Additional completed items (implementation work)
  - [ ] Improve CI to build dependencies (split job: deps build, core build, unit tests)
 
 ### Phase 1 — Core JIT engine (engine/)
-- [ ] Evaluate `Cling` vs `ClangREPL` (matrix: maintenance, build complexity, runtime size, feature parity)
+- [x] Evaluate `Cling` vs `ClangREPL` — **ClangREPL chosen** (see notes)
 - [ ] Add `third_party/llvm/` submodule or FetchContent setup for minimal LLVM required for chosen JIT
-- [ ] Implement Cling (or ClangREPL) bootstrap:
+- [ ] Implement ClangREPL bootstrap:
   - [ ] Minimal startup harness that preloads a small "runtime universe" header set
   - [ ] Compile & execute a tiny user script (smoke test)
   - [ ] Measure cold start and aim for <100ms baseline (profiling harness)
 - [ ] Add CMake targets to optionally build the JIT tooling and unit test harness
 
-**Notes / next steps (JIT):** We chose the straightforward initial path to evaluate **ClangREPL (LLVM 16+)** as a primary candidate for maintainability. The concrete next steps for contributors:
+**Notes / next steps (JIT):** We chose **ClangREPL (LLVM 16+)** as the JIT backend for the project. The concrete next steps for contributors:
 - Add `third_party/llvm/` via git submodule or use `FetchContent` in CMake to fetch a minimal LLVM build configured with `-DLLVM_TARGETS_TO_BUILD=\"host\"` and `-DLLVM_BUILD_TOOLS=OFF`.
 - Create an `engine/jit_bootstrap.cpp` with a minimal ClangREPL harness that:
   - Preloads commonly used headers (iostream, string, vector, <your api headers>) into the REPL session.
@@ -197,13 +197,14 @@ If you'd like, I can also add a `CONTRIBUTING.md`, a sample `Dockerfile.dev`, an
 
 ## Open design questions (need your guidance) ⚖️
 - Landlock requirement: should kernel ≥5.13 be a **hard requirement**, or should we provide a degraded fallback mode for older kernels?  
-- JIT backend: **Cling** (CERN) or **ClangREPL** (LLVM 16+)? Which should be prioritized for evaluation?  
+ - JIT backend: **ClangREPL (chosen)** (LLVM 16+).  
 - Mail library & Boost: should we statically vendor Boost (increase binary complexity), or choose a smaller SMTP library to avoid Boost?
 
 ---
 
 ## Immediate next actions (recommended) ▶️
-1. Decide the Landlock policy (hard requirement vs fallback) and preferred JIT backend (Cling vs ClangREPL).  
+1. Landlock policy chosen: **kernel ≥ 5.13 is a hard requirement** (no degraded fallback mode).  
+2. JIT backend chosen: **ClangREPL (LLVM 16+)**.  
 2. Add `third_party/` and vendor minimal LLVM for the chosen JIT, and add CMake targets to build a small Cling/REPL test harness.  
 3. Add a Docker-based dev environment for reproducible builds (ensure `cmake`, `ninja`, and toolchain for musl available).
 
@@ -218,7 +219,7 @@ If you'd like, I can also add a `CONTRIBUTING.md`, a sample `Dockerfile.dev`, an
 
 | Feature | Google Apps Script (GAS) | native_node (current repo) | Gap / Notes |
 |---|---:|---|---|
-| Language & Execution Model | JavaScript (V8-based managed runtime) — instant edit/exec | C++ JIT (Cling/LLVM planned) — aims for REPL/JIT | ⚠️ Partial: JIT stub added; Cling not yet integrated |
+| Language & Execution Model | JavaScript (V8-based managed runtime) — instant edit/exec | C++ JIT (ClangREPL/LLVM planned) — aims for REPL/JIT | ⚠️ Partial: JIT stub added; ClangREPL not yet integrated |
 | REPL / Instant deploy | Built-in editor + instant deploy | Planned JIT REPL & instant deploy (engine scaffold) | ⚠️ Partial: smoke test and flags added; full REPL missing |
 | Web App endpoints (doGet/doPost) | First-class: deploy webapps easily | Static server exists; dispatcher → JIT planned (Drogon) | ⚠️ Partial: static UI done; dynamic dispatch not implemented |
 | HTML templating (HtmlService) | Yes (templating & sandboxing) | Planned (HtmlService in design) | ❌ Not implemented |

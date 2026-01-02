@@ -20,6 +20,8 @@ case ${1:-} in
     docker build -t "$IMAGE_NAME" -f Dockerfile.dev .
     docker run --rm -it -v "$PWD":/work -w /work "$IMAGE_NAME" /bin/bash -lc "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build -j \$(nproc)"
     ;;
+  # Note: The JIT smoke test (ClangREPL) requires `clang-repl` to be available in the image.
+  # If your dev image does not include `clang-repl`, install it (or a compatible Clang/LLVM build) before running the tests.
   *)
     usage
     ;;

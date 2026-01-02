@@ -5,7 +5,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   build-essential \
   cmake \
   ninja-build \
+  wget \
+  gnupg \
+  lsb-release \
   clang \
+  llvm \
   gcc-multilib \
   musl-tools \
   pkg-config \
@@ -18,3 +22,24 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 WORKDIR /work
 
 CMD ["/bin/bash"]
+
+# Note: For JIT smoke tests, a ClangREPL (clang-repl) binary is required in the image.
+# You can install a compatible Clang/LLVM build in the image if you plan to run the JIT smoke tests inside the container.
+
+# Best-effort: install clang-repl if available from the distro repos (may require LLVM 16+)
+RUN set -eux; \
+    # Add LLVM apt repository for a specific toolchain (16) to reliably provide clang-repl
+    wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/$(lsb_release -sc)/ llvm-toolchain-16 main" > /etc/apt/sources.list.d/llvm.list; \
+    apt-get update; \
+    # Try to install clang-16 and clang-repl-16 from the LLVM toolchain packages
+    if apt-cache show clang-16 >/dev/null 2>&1 || apt-cache show clang-repl-16 >/dev/null 2>&1; then \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y clang-16 clang-repl-16 || true; \
+    fi; \
+    # Fallback: attempt to install generic clang-repl if present in repos
+    if apt-cache show clang-repl >/dev/null 2>&1; then \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y clang-repl; \
+    else \
+      echo "clang-repl not available in apt repos; to run JIT smoke tests install clang-repl (LLVM 16+) manually in the image"; \
+    fi; \
+    rm -rf /var/lib/apt/lists/*

@@ -17,6 +17,13 @@ jobs:
       - name: Build
         run: |
           cmake --build build --config Release
+      - name: JIT smoke test (if clang-repl available)
+        run: |
+          if command -v clang-repl >/dev/null 2>&1; then
+            ctest -R jit_smoke_test -V || (echo "JIT smoke test failed" && exit 1)
+          else
+            echo "clang-repl not found; skipping JIT smoke test"
+          fi
       - name: Run integration tests
         run: |
           chmod +x tests/api_status_test.sh

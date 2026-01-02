@@ -9,10 +9,17 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build dev image
         run: docker build -t native_node:dev -f Dockerfile.dev .
+      - name: Verify clang-repl in dev image
+        run: |
+          docker run --rm native_node:dev /bin/bash -lc "command -v clang-repl >/dev/null 2>&1 && clang-repl --version || (echo 'clang-repl missing in dev image' && exit 1)"
       - name: Build inside image (Release)
         run: |
           docker run --rm -v ${{ github.workspace }}:/work -w /work native_node:dev \
             /bin/bash -lc "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release -j \$(nproc)"
+      - name: Run JIT smoke test (inside dev image)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/work -w /work native_node:dev \
+            /bin/bash -lc "ctest -R jit_smoke_test -V || (echo 'JIT smoke test failed or clang-repl missing' && exit 1)"
       - name: Run integration tests
         run: |
           docker run --rm -v ${{ github.workspace }}:/work -w /work native_node:dev \

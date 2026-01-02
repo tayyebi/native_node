@@ -3,8 +3,8 @@
 This repository contains an experimental native C++ scripting engine and serverless runtime.
 
 Goals:
-- JIT compilation via LLVM/Cling
-	- Note: This project now requires kernel >= 5.13 for Landlock support and uses Cling as the initial JIT backend (stubbed).
+- JIT compilation via LLVM/ClangREPL
+	- Note: This project requires kernel >= 5.13 for Landlock support (hard requirement) and uses ClangREPL as the initial JIT backend (stubbed).
 - Kernel-level sandboxing (Landlock + seccomp)
 - Integrated services: SQLite, MailApp
 - Single static binary distribution using musl
@@ -27,7 +27,7 @@ Note: Static linking may require additional system packages (libssl, zlib, etc.)
 Running the JIT smoke test
 -------------------------
 
-After building, run the CTest smoke test to validate JIT bootstrap (stub/Cling detection):
+After building, run the CTest smoke test to validate JIT bootstrap (stub/ClangREPL detection):
 
 ```bash
 cd build

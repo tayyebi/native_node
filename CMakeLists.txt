@@ -40,6 +40,16 @@ target_include_directories(native_node PRIVATE src/web)
 find_package(Threads REQUIRED)
 target_link_libraries(native_node PRIVATE Threads::Threads)
 
+# Attempt to find libseccomp for seccomp support
+find_library(SECCOMP_LIB NAMES seccomp)
+if(SECCOMP_LIB)
+  message(STATUS "Found libseccomp: ${SECCOMP_LIB}")
+  add_compile_definitions(USE_LIBSECCOMP=1)
+  target_link_libraries(native_node PRIVATE ${SECCOMP_LIB})
+else()
+  message(WARNING "libseccomp not found: seccomp support will be disabled at compile time")
+endif()
+
 # Project options: JIT and ClangREPL
 option(ENGINE_JIT "Build JIT engine support" ON)
 option(USE_CLANGREPL "Use ClangREPL (LLVM) as the JIT backend" ON)
@@ -84,6 +94,21 @@ if(UNIX AND EXISTS "${CMAKE_SOURCE_DIR}/src/sandbox/ruleset.cpp")
   target_include_directories(landlock_test PRIVATE src)
   add_test(NAME landlock_test COMMAND landlock_test)
   set_tests_properties(landlock_test PROPERTIES LABELS "smoke;landlock")
+
+  # Landlock policy test - uses a temp dir and only runs if Landlock is available
+  add_executable(landlock_policy_test tests/landlock_policy_test.cpp src/sandbox/ruleset.cpp src/sandbox/sandbox.cpp)
+  target_include_directories(landlock_policy_test PRIVATE src)
+  add_test(NAME landlock_policy_test COMMAND landlock_policy_test)
+  set_tests_properties(landlock_policy_test PROPERTIES LABELS "smoke;landlock;policy")
+  
+  # Add seccomp test if libseccomp is available at compile time
+  if(SECCOMP_LIB)
+    add_executable(seccomp_test tests/seccomp_test.cpp src/sandbox/seccomp.cpp)
+    target_include_directories(seccomp_test PRIVATE src)
+    target_link_libraries(seccomp_test PRIVATE ${SECCOMP_LIB})
+    add_test(NAME seccomp_test COMMAND seccomp_test)
+    set_tests_properties(seccomp_test PROPERTIES LABELS "smoke;seccomp")
+  endif()
 endif()
 
 

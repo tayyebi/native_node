@@ -78,6 +78,9 @@ Additional completed items (implementation work)
 - Implement a `RulesetBuilder` that reads a JSON/YAML policy (paths + access flags) and applies the Landlock ruleset for the current process before running user code.
 - Provide a conservative fallback mode when Landlock is not available: deny all write attempts by default, enforce strict seccomp policy from `config/syscalls.conf`, and log the degraded mode clearly in startup logs. Document that Landlock is *recommended* for production.
 
+**Updates:** A sample policy file has been added at `config/landlock_policy.conf` (format: `<path> <ro|rw>`). The `sandbox::apply_default_policy()` routine now attempts to load this file and applies the configured per-path rules via the `RulesetBuilder`. If the file is absent, a default minimal ruleset is created and applied. Remember: Landlock is a hard requirement (kernel ≥5.13); the process will abort startup if Landlock is unavailable.
+
+**Seccomp update:** Added support to load a seccomp syscall whitelist from `config/syscalls.conf` (one syscall name per line). A sample file `config/syscalls.example.conf` is provided. When `libseccomp` is available at compile time, the runtime will apply the whitelist after the Landlock ruleset. The conservative security posture is to require both Landlock and an applied seccomp whitelist for startup.
 ### Phase 2 — Integrated services (services/)
 - [ ] SQLite wrapper with WAL and connection pooling
 - [ ] MailApp wrapper over `mailio` or chosen alternative (decide Boost strategy)

@@ -21,6 +21,12 @@ Code style
 - Testing & CI
 - Use `scripts/dev_setup.sh build-run` to run the full build inside the dev image.
 - Note: This project requires kernel >= 5.13 for Landlock support (hard requirement) and the JIT backend uses **ClangREPL**. Ensure `clang-repl` is available in your dev environment for JIT smoke tests to pass.
+ - Landlock policy: a simple policy file can be placed at `config/landlock_policy.conf` using the format:
+	 - `# comment`
+	 - `<absolute-or-relative-path> <ro|rw>`
+	 - Example: `./scripts rw` or `/tmp rw`
+	 The runtime will attempt to auto-load `config/landlock_policy.conf` at startup (when Landlock is available).
+ - Seccomp whitelist: a newline list of syscall names can be placed at `config/syscalls.conf` (see `config/syscalls.example.conf`). Keep this list minimal and auditable; adding broad syscall access undermines the sandbox.
 - Add tests under `tests/` (shell scripts are acceptable for integration smoke tests). Update `.github/workflows/ci.yml` or add a new CI workflow for reproducible builds.
 
 Third-party dependencies

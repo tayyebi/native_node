@@ -34,6 +34,14 @@ ExecResult run_command_in_cgroup(const std::vector<std::string>& args, const Cgr
         return res;
     }
 
+    // Create a temp file to capture stdout/stderr
+    char tmpname[] = "/tmp/native_node_exec_XXXXXX";
+    int tmpfd = mkstemp(tmpname);
+    if (tmpfd < 0) {
+        std::cerr << "[executor] failed to create temp file" << std::endl;
+        return res;
+    }
+
     pid_t pid = fork();
     if (pid < 0) {
         std::cerr << "[executor] fork failed: " << strerror(errno) << std::endl;
@@ -42,6 +50,11 @@ ExecResult run_command_in_cgroup(const std::vector<std::string>& args, const Cgr
 
     if (pid == 0) {
         // Child: exec
+        // Redirect stdout/stderr to tmpfd
+        dup2(tmpfd, STDOUT_FILENO);
+        dup2(tmpfd, STDERR_FILENO);
+        // close tmpfd in child; execv will replace image
+        close(tmpfd);
         char** argv = make_argv(args);
         execv(argv[0], argv);
         // If execv returns, error
@@ -77,6 +90,15 @@ ExecResult run_command_in_cgroup(const std::vector<std::string>& args, const Cgr
         waitpid(pid, &status, 0);
         res.success = false;
         res.exit_code = -1;
+        // read output so far
+        lseek(tmpfd, 0, SEEK_SET);
+        std::string out;
+        char buf[4096];
+        ssize_t n;
+        while ((n = read(tmpfd, buf, sizeof(buf))) > 0) out.append(buf, buf + n);
+        res.output = out;
+        close(tmpfd);
+        unlink(tmpname);
         return res;
     }
 
@@ -87,6 +109,16 @@ ExecResult run_command_in_cgroup(const std::vector<std::string>& args, const Cgr
         res.term_signal = WTERMSIG(status);
         res.success = false;
     }
+
+    // read output file
+    lseek(tmpfd, 0, SEEK_SET);
+    std::string out;
+    char buf[4096];
+    ssize_t n;
+    while ((n = read(tmpfd, buf, sizeof(buf))) > 0) out.append(buf, buf + n);
+    res.output = out;
+    close(tmpfd);
+    unlink(tmpname);
 
     return res;
 }

@@ -10,6 +10,7 @@ struct ExecResult {
     int exit_code = -1;
     int term_signal = 0;
     bool success = false;
+    std::string output;
 };
 
 // Run a command (args[0] executable, args[1..] argv) inside a transient InvocationCgroup

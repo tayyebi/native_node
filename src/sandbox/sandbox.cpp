@@ -1,5 +1,9 @@
 #include "sandbox.h"
 #include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "seccomp.h"
 #include "ruleset.h"
 #include <sys/stat.h>
 

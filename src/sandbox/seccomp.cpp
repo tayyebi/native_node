@@ -47,7 +47,7 @@ bool load_seccomp_whitelist(const std::string& whitelist_file) {
 
     for (const auto& s : syscalls) {
         int nr = seccomp_syscall_resolve_name(s.c_str());
-        if (nr == __NR_syscall) {
+        if (nr < 0) {
             std::cerr << "[sandbox/seccomp] unknown syscall name: " << s << std::endl;
             seccomp_release(ctx);
             return false;

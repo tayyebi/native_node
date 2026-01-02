@@ -1,8 +1,11 @@
 #include "ruleset.h"
 #include "sandbox.h"
 #include <iostream>
+#include <cstring>
 
-#if defined(__linux__)
+// If HAVE_LANDLOCK is not defined at compile time, provide stubs and avoid including
+// linux/landlock.h which may not be present on all systems / headers.
+#if defined(HAVE_LANDLOCK)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -16,6 +19,35 @@
 # endif
 #endif
 #include <linux/landlock.h>
+#else
+// Provide minimal stubs so code depending on RulesetBuilder can still compile.
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+#endif
+
+// If Landlock headers are not available at compile time, define minimal constants so
+// the code can still compile. Functional behavior will be disabled at runtime if
+// Landlock is not actually available.
+#if !defined(HAVE_LANDLOCK)
+#ifndef LANDLOCK_ACCESS_FS_READ_FILE
+#define LANDLOCK_ACCESS_FS_READ_FILE 0
+#endif
+#ifndef LANDLOCK_ACCESS_FS_WRITE_FILE
+#define LANDLOCK_ACCESS_FS_WRITE_FILE 0
+#endif
+#ifndef LANDLOCK_ACCESS_FS_EXECUTE
+#define LANDLOCK_ACCESS_FS_EXECUTE 0
+#endif
+#ifndef LANDLOCK_ACCESS_FS_READ_DIR
+#define LANDLOCK_ACCESS_FS_READ_DIR 0
+#endif
+#ifndef LANDLOCK_ACCESS_FS_REMOVE_FILE
+#define LANDLOCK_ACCESS_FS_REMOVE_FILE 0
+#endif
+#ifndef LANDLOCK_RULE_PATH_BENEATH
+#define LANDLOCK_RULE_PATH_BENEATH 0
+#endif
 #endif
 
 namespace sandbox {
@@ -80,12 +112,12 @@ bool RulesetBuilder::create_ruleset() {
     std::cerr << "[sandbox/ruleset] Landlock not supported on non-Linux platforms" << std::endl;
     return false;
 #endif
-
     if (!is_landlock_available()) {
         std::cerr << "[sandbox/ruleset] Landlock not available on this kernel" << std::endl;
         return false;
     }
 
+#if defined(HAVE_LANDLOCK)
     // Create a ruleset that handles common FS accesses. This is a minimal skeleton.
     struct landlock_ruleset_attr attr = {};
     attr.handled_access_fs = LANDLOCK_ACCESS_FS_READ_FILE |
@@ -102,7 +134,12 @@ bool RulesetBuilder::create_ruleset() {
     }
 
     ruleset_fd_ = static_cast<int>(fd);
+#else
+    std::cerr << "[sandbox/ruleset] Landlock headers not available at compile time; cannot create ruleset" << std::endl;
+    return false;
+#endif
 
+#if defined(HAVE_LANDLOCK)
     // If there are per-path entries, add them to the ruleset
     for (const auto& entry : paths_) {
         // entry is either "path" or "path access" where access is numeric
@@ -133,6 +170,9 @@ bool RulesetBuilder::create_ruleset() {
 
         close(path_fd);
     }
+#else
+    (void)paths_; // silence unused when HAVE_LANDLOCK is not defined
+#endif
     return true;
 }
 
@@ -148,11 +188,16 @@ bool RulesetBuilder::apply() {
     }
 
     // Apply the ruleset to the current process
+#if defined(HAVE_LANDLOCK)
     int rc = static_cast<int>(syscall(SYS_landlock_restrict_self, ruleset_fd_, 0));
     if (rc != 0) {
         std::cerr << "[sandbox/ruleset] failed to apply ruleset: " << strerror(errno) << std::endl;
         return false;
     }
+#else
+    std::cerr << "[sandbox/ruleset] cannot apply ruleset: Landlock headers not available at compile time" << std::endl;
+    return false;
+#endif
 
     return true;
 }

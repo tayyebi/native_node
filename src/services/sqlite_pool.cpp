@@ -1,3 +1,5 @@
+// Only compile the real implementation when SQLite3 headers are available
+#if defined(HAVE_SQLITE3)
 #include "sqlite_pool.h"
 #include <iostream>
 #include <cassert>
@@ -94,3 +96,4 @@ SQLiteConnHandle::~SQLiteConnHandle() {
 sqlite3* SQLiteConnHandle::get() { return conn_; }
 
 } // namespace services
+#endif

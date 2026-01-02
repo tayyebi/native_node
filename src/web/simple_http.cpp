@@ -10,6 +10,10 @@
 #include <thread>
 #include <atomic>
 #include <unordered_map>
+#include <vector>
+#include "sandbox/executor.h"
+#include "engine/engine.h"
+#include "services/services.h"
 
 static std::atomic<bool> server_running{false};
 static int server_fd = -1;
@@ -91,9 +95,7 @@ static void handle_client(int client) {
         // Query subsystem health
         bool engine_ok = false;
         bool services_ok = false;
-        // Lazy-query via external symbols (nullable if not linked yet)
-        extern bool engine::is_initialized();
-        extern bool services::is_initialized();
+        // Query subsystem health via public APIs
         engine_ok = engine::is_initialized();
         services_ok = services::is_initialized();
 

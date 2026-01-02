@@ -12,12 +12,16 @@ static std::atomic<bool> g_initialized{false};
 
 bool initialize() {
     std::cout << "[services] initializing (SQLite, MailApp, PropertyStore stubs)" << std::endl;
-    // Initialize SQLite connection pool (WAL mode)
+    // Initialize SQLite connection pool (WAL mode) if available
+#ifdef HAVE_SQLITE3
     g_sqlite_pool = std::make_unique<services::SQLiteConnectionPool>("./data/native_node.db", 4);
     if (!g_sqlite_pool->initialize()) {
         std::cerr << "[services] failed to initialize SQLite pool" << std::endl;
         return false;
     }
+#else
+    std::cout << "[services] SQLite3 headers not found; skipping SQLite pool initialization" << std::endl;
+#endif
 
     g_initialized = true;
     return true;

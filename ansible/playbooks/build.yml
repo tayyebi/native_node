@@ -31,7 +31,7 @@
       chdir: "{{ playbook_dir }}/../.."
 
   - name: Build project
-    command: cmake --build {{ build_dir }} --config Release -j $(nproc)
+    shell: cmake --build {{ build_dir }} --config Release -- -j $(nproc)
     args:
       chdir: "{{ playbook_dir }}/../.."
 

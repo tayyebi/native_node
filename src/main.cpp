@@ -6,16 +6,17 @@
 #include "engine/engine.h"
 #include "sandbox/sandbox.h"
 #include "services/services.h"
-#include "web/static_server.h"
+#include "web/simple_http.h"
 #include <signal.h>
 #include <atomic>
 
-int main(int argc, char** argv) {
 static volatile sig_atomic_t g_terminate = 0;
 
 static void signal_handler(int) {
     g_terminate = 1;
 }
+
+int main(int argc, char** argv) {
 
     std::cout << "native_node (Native C++ Scripting Engine) v0.1.0\n";
     std::cout << "Configuration directory: ./config" << std::endl;

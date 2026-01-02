@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <vector>
+#if defined(HAVE_SQLITE3)
 #include <sqlite3.h>
 
 namespace services {
@@ -47,3 +48,23 @@ private:
 };
 
 } // namespace services
+#else
+namespace services {
+// Stubbed fallback when SQLite3 development headers are not available
+class SQLiteConnectionPool {
+public:
+    explicit SQLiteConnectionPool(const std::string& /*db_path*/, size_t /*pool_size*/ = 4) {}
+    ~SQLiteConnectionPool() {}
+    bool initialize() { return false; }
+    void shutdown() {}
+    void* acquire() { return nullptr; }
+    void release(void* /*conn*/) {}
+};
+class SQLiteConnHandle {
+public:
+    SQLiteConnHandle(SQLiteConnectionPool& /*pool*/, void* /*conn*/) {}
+    ~SQLiteConnHandle() {}
+    void* get() { return nullptr; }
+};
+} // namespace services
+#endif

@@ -54,10 +54,20 @@ else()
   message(WARNING "libseccomp not found: seccomp support will be disabled at compile time")
 endif()
 
+# Check for Landlock header using a C++-aware check to avoid try_compile errors
+include(CheckIncludeFileCXX)
+check_include_file_cxx("linux/landlock.h" HAVE_LANDLOCK)
+if(HAVE_LANDLOCK)
+  message(STATUS "Found linux/landlock.h: enabling Landlock features")
+  add_compile_definitions(HAVE_LANDLOCK=1)
+else()
+  message(WARNING "linux/landlock.h not found: Landlock features will be disabled at compile time")
+endif()
+
 # Project options: JIT and ClangREPL
 option(ENGINE_JIT "Build JIT engine support" ON)
 option(USE_CLANGREPL "Use ClangREPL (LLVM) as the JIT backend" ON)
-option(MUSL_STATIC "Link statically with musl (static binary)" ON)
+option(MUSL_STATIC "Link statically with musl (static binary)" OFF)
 
 if(ENGINE_JIT)
   target_compile_definitions(native_node PRIVATE -DENGINE_JIT=1)
@@ -97,14 +107,20 @@ set_tests_properties(jit_smoke_test PROPERTIES LABELS "smoke;jit")
 
 # Add a small landlock unit test when building on Linux
 if(UNIX AND EXISTS "${CMAKE_SOURCE_DIR}/src/sandbox/ruleset.cpp")
-  add_executable(landlock_test tests/landlock_test.cpp src/sandbox/ruleset.cpp src/sandbox/sandbox.cpp)
+  add_executable(landlock_test tests/landlock_test.cpp src/sandbox/ruleset.cpp src/sandbox/sandbox.cpp src/sandbox/seccomp.cpp)
   target_include_directories(landlock_test PRIVATE src)
+  if(SECCOMP_LIB)
+    target_link_libraries(landlock_test PRIVATE ${SECCOMP_LIB})
+  endif()
   add_test(NAME landlock_test COMMAND landlock_test)
   set_tests_properties(landlock_test PROPERTIES LABELS "smoke;landlock")
 
   # Landlock policy test - uses a temp dir and only runs if Landlock is available
-  add_executable(landlock_policy_test tests/landlock_policy_test.cpp src/sandbox/ruleset.cpp src/sandbox/sandbox.cpp)
+  add_executable(landlock_policy_test tests/landlock_policy_test.cpp src/sandbox/ruleset.cpp src/sandbox/sandbox.cpp src/sandbox/seccomp.cpp)
   target_include_directories(landlock_policy_test PRIVATE src)
+  if(SECCOMP_LIB)
+    target_link_libraries(landlock_policy_test PRIVATE ${SECCOMP_LIB})
+  endif()
   add_test(NAME landlock_policy_test COMMAND landlock_policy_test)
   set_tests_properties(landlock_policy_test PROPERTIES LABELS "smoke;landlock;policy")
   
@@ -122,6 +138,7 @@ endif()
 find_package(SQLite3)
 if (SQLite3_FOUND)
   message(STATUS "Found SQLite3: ${SQLite3_LIBRARIES}")
+  add_compile_definitions(HAVE_SQLITE3=1)
   add_executable(sqlite_pool_test tests/sqlite_pool_test.cpp src/services/sqlite_pool.cpp)
   target_include_directories(sqlite_pool_test PRIVATE src)
   target_link_libraries(sqlite_pool_test PRIVATE ${SQLite3_LIBRARIES})

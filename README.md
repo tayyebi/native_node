@@ -1,15 +1,32 @@
 # native_node — Native C++ Scripting Engine
 
-This repository contains an experimental native C++ scripting engine and serverless runtime.
+This repository contains an experimental native C++ scripting engine and serverless runtime that aims to combine the ease of Google Apps Script with the performance of native C++.
 
-Goals:
-- JIT compilation via LLVM/ClangREPL
+## Goals
+- 🚀 JIT compilation via LLVM/ClangREPL
 	- Note: This project requires kernel >= 5.13 for Landlock support (hard requirement) and uses ClangREPL as the initial JIT backend (stubbed).
-- Kernel-level sandboxing (Landlock + seccomp)
-- Integrated services: SQLite, MailApp
-- Single static binary distribution using musl
+- 🔒 Kernel-level sandboxing (Landlock + seccomp + cgroups)
+- 📦 Integrated services: SQLite, MailApp, PropertyStore
+- 📦 Single static binary distribution using musl
+- ⚡ <100ms cold start target
+- 🎯 Production-ready security and performance
 
-See `research.md` for design and architecture notes.
+## Project Status
+
+**Current Phase**: Foundation (20% complete)  
+**Target**: Production v1.0 by January 2027
+
+See detailed status:
+- 📊 [Market Readiness Assessment](MARKET_READINESS.md) - What's needed for production
+- 🗺️ [Development Roadmap](ROADMAP.md) - Detailed implementation plan
+- 🚀 [Quick Start for Contributors](QUICK_START_CONTRIBUTORS.md) - How to help
+- 📝 [Project Status Report](REPORT.md) - Current state and completed work
+
+## Documentation
+
+- [RESEARCH.md](RESEARCH.md) - Architecture and design notes
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [ROADMAP.md](ROADMAP.md) - Development roadmap and milestones
 
 Building with musl (static binary)
 ----------------------------------

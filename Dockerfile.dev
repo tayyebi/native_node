@@ -28,13 +28,13 @@ CMD ["/bin/bash"]
 
 # Best-effort: install clang-repl if available from the distro repos (may require LLVM 16+)
 RUN set -eux; \
-    # Add LLVM apt repository for a specific toolchain (16) to reliably provide clang-repl
+    # Add LLVM apt repository for a specific toolchain (18) to reliably provide clang-repl
     wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/$(lsb_release -sc)/ llvm-toolchain-16 main" > /etc/apt/sources.list.d/llvm.list; \
+    echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/$(lsb_release -sc)/ llvm-toolchain-18 main" > /etc/apt/sources.list.d/llvm.list; \
     apt-get update; \
-    # Try to install clang-16 and clang-repl-16 from the LLVM toolchain packages
-    if apt-cache show clang-16 >/dev/null 2>&1 || apt-cache show clang-repl-16 >/dev/null 2>&1; then \
-      DEBIAN_FRONTEND=noninteractive apt-get install -y clang-16 clang-repl-16 || true; \
+    # Try to install clang-18 and clang-repl-18 from the LLVM toolchain packages
+    if apt-cache show clang-18 >/dev/null 2>&1 || apt-cache show clang-repl-18 >/dev/null 2>&1; then \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y clang-18 clang-repl-18 || true; \
     fi; \
     # Fallback: attempt to install generic clang-repl if present in repos
     if apt-cache show clang-repl >/dev/null 2>&1; then \

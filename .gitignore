@@ -1,4 +1,5 @@
 /build/
+/build_*/
 /.idea/
 .vscode/
 artifacts/

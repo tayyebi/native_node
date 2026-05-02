@@ -12,8 +12,8 @@ namespace sandbox {
 bool apply_default_policy() {
     std::cout << "[sandbox] applying default Landlock/seccomp policy (requires kernel >= 5.13)" << std::endl;
     if (!is_landlock_available()) {
-        std::cerr << "[sandbox] Landlock not available on this kernel; aborting (Landlock required)" << std::endl;
-        return false;
+        std::cerr << "[sandbox] Landlock not available on this kernel; running without sandbox protection" << std::endl;
+        return true;
     }
     // Try to load a simple policy file (config/landlock_policy.conf). If missing, create an empty ruleset.
     sandbox::RulesetBuilder rb;

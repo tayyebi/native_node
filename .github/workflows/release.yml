@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build clang musl-tools libseccomp-dev libsqlite3-dev
+
+      - name: Build static Linux x86_64 binary
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUSL_STATIC=ON
+          cmake --build build --config Release -j $(nproc)
+
+      - name: Rename binary
+        run: cp build/native_node native_node-linux-x64
+
+      - name: Upload release artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" native_node-linux-x64 --clobber

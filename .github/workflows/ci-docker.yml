@@ -1,6 +1,6 @@
 name: CI (Docker)
 
-on: [push, pull_request]
+on: [push, release]
 
 jobs:
   docker-build:

@@ -31,6 +31,6 @@ RUN set -eux; \
     wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg; \
     echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" > /etc/apt/sources.list.d/llvm.list; \
     apt-get update; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y clang-18 clang-repl-18; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y clang-18; \
     ln -sf /usr/bin/clang-repl-18 /usr/local/bin/clang-repl; \
     rm -rf /var/lib/apt/lists/*

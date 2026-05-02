@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cassert>
 #include <thread>
+#include <filesystem>
 
 namespace services {
 
@@ -20,6 +21,17 @@ bool SQLiteConnectionPool::initialize() {
 
     conns_.resize(pool_size_, nullptr);
     in_use_.assign(pool_size_, false);
+
+    // Ensure the parent directory exists before SQLite tries to create the file
+    std::filesystem::path db_file(db_path_);
+    if (db_file.has_parent_path()) {
+        std::error_code ec;
+        std::filesystem::create_directories(db_file.parent_path(), ec);
+        if (ec) {
+            std::cerr << "[sqlite_pool] failed to create db directory: " << ec.message() << std::endl;
+            return false;
+        }
+    }
 
     for (size_t i = 0; i < pool_size_; ++i) {
         sqlite3* db = nullptr;
